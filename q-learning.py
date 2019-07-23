@@ -97,10 +97,11 @@ for episode in range(1,200000):
         #print("hola3")
         #apply dynamic model to check the new state during 0.5seconds
         N=1
+        
         #print("hola5555")
-        for i in range(1+counter*N, 100):#N+counter*N):
+        for i in range(counter*N,1+N+counter*N):
             #print("hola888")
-            #print(i)
+            print(i)
             z_accel[i]=(-g + F/m)*100 #apply the dynamic model to the particle [cm/s2]
 
             z_vel[i]=z_vel_old + (z_accel[i]+z_accel_old)/2*dt
@@ -116,7 +117,7 @@ for episode in range(1,200000):
                 rand_state=np.random.permutation(Rows)
                 state=rand_state[1]
                 state=11
-                break
+            break #
 
 
         #if negative height or velocity values, reward it very negatively.
@@ -135,6 +136,7 @@ for episode in range(1,200000):
 
             #find the new state after the dynamic model
                 x1=np.where(Q[state]==QMax)
+                x1=int(x1[0][0])
                 index_1=np.where(STATES==rounded_pos)
                 index_2=np.where(SPEEDS==rounded_vel)
                 index_1=int(index_1[0])
