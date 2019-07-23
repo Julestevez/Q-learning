@@ -4,6 +4,7 @@
 #Force applied to the particle might be fixed +F, -F or 0
 
 import numpy as np
+import math
 
 m=1 #1kg mass
 g=9.80 #gravity
@@ -16,20 +17,22 @@ Final_vel=0
 n_pos=111
 STATES=np.linspace(0,110,n_pos)
 
-#-10,-9,-8...0,1,2,3...,50cm/s.
+#SPEEDS are discretized -10,-9,-8...0,1,2,3...,50cm/s.
 n_speeds=61
 SPEEDS=np.linspace(-10,50,n_speeds)
 
 #ROWS=    States (121*61=7381 rows)
-#COLUMNS= Actions (+F, -F, 0)  (3 columns)
+#COLUMNS= Actions (9.9 , 9.7) two actions
 Rows=n_pos*n_speeds
 Columns=2
 Rows2=n_speeds
 
-#NUEVO
+#initialize variables
 z_pos_goal=np.zeros(2000)
 z_vel_goal=np.zeros(2000)
 z_acel_goal=np.zeros(2000)
+velocidad_final=np.zeros(2000)#ya veré como declaro esto
+z_sequence=np.zeros(2000)#ya veré cómo declaro esto
 
 #Initialize Q matrix
 Q=np.ones((Rows,Columns))
@@ -42,7 +45,6 @@ Actions=([9.9, 9.7])
 goalCounter=0
 logro=0
 
-#tic();
 for episode in range(1,200000):
     # random initial state
     z_pos=np.zeros(2000)
@@ -51,14 +53,12 @@ for episode in range(1,200000):
     # must do this to delete previous values
     
     counter=0
-    rand_state=np.random.permutation(Rows2)
-    state=rand_state[1]           # current state
-    state=11
+    state=11 #let's choose the initial state always height 0, speed 0cm/s
 
     rand_action=np.random.permutation(Columns)
     action=rand_action[1] #current action
 
-    print(episode) #check
+    print("episode",episode) #check
 
     z_accel_old=0
     z_vel_old=0
@@ -75,32 +75,32 @@ for episode in range(1,200000):
     z_vel_old=SPEEDS[RESTO+1]
 
 
-    while (state!= goalState or state!= goalState+n_speeds or state!= goalState-n_speeds or state!= goalState+1|state!= goalState+n_speeds+1 or state!= goalState-n_speeds+1):          # loop until find goal state and goal action
+    while (state!= goalState or state!= (goalState+n_speeds) or state!= (goalState-n_speeds) or state!= (goalState+1) or state!= (goalState+n_speeds+1) or state!= (goalState-n_speeds+1)):          # loop until find goal state and goal action
 
-        aleatory_array=np.random.permutation(20);
-        aleatory_number=np.random.permutation(1);
+        aleatory_array=np.random.permutation(20)
+        aleatory_number=aleatory_array[0]
         if (aleatory_number==1): #5 of times choose aleatory action
             # select any action from this state
-            x1=randperm(2)    # randomize the possible action out of 3 possible
+            x1=np.random.permutation(2)    # randomize the possible action out of 3 possible
             x1=x1(1)          # select an action (only the first element of random sequence)
-            F=Actions(x1)
-            print("hola1")
+            F=Actions[x1]
+        
         else:
             QMax=max(Q[state])  #selects the highest value of the row
             x1=np.where(Q[state]==QMax)
-            x1= np.asarray(x1)
-            if x1.size>1:
-                x1=x1[0,0]
-                print("hola2")
-                F=Actions[x1]
+            x1=int(x1[0][0])
+            #x1= np.asarray(x1)
+            F=Actions[x1]
+            
+                
 
-        print("hola3")
+        #print("hola3")
         #apply dynamic model to check the new state during 0.5seconds
         N=1
-        print("hola5555")
+        #print("hola5555")
         for i in range(1+counter*N, 100):#N+counter*N):
-            print("hola888")
-            print(i)
+            #print("hola888")
+            #print(i)
             z_accel[i]=(-g + F/m)*100 #apply the dynamic model to the particle [cm/s2]
 
             z_vel[i]=z_vel_old + (z_accel[i]+z_accel_old)/2*dt
@@ -110,7 +110,7 @@ for episode in range(1,200000):
             z_pos_old=z_pos[i]
 
             counter=counter+1
-            print("counter:",counter)
+            #print("counter:",counter)
 
             if i>300:
                 rand_state=np.random.permutation(Rows)
@@ -122,9 +122,9 @@ for episode in range(1,200000):
         #if negative height or velocity values, reward it very negatively.
         #If too big values, too
             if (min(z_pos)<0 or min(z_vel)<-10 or max(z_vel)>50 or max(z_pos)>109):
-                Q[state,x1(1)]=-1
+                Q[state,x1]=-1
                 rand_state=np.random.permutation(Rows2)
-                state=rand_state(1)
+                state=rand_state[1]
                 state=11
                 break
 
@@ -137,20 +137,21 @@ for episode in range(1,200000):
                 x1=np.where(Q[state]==QMax)
                 index_1=np.where(STATES==rounded_pos)
                 index_2=np.where(SPEEDS==rounded_vel)
+                index_1=int(index_1[0])
+                index_2=int(index_2[0])
 
-                #index_1=find(STATES==rounded_pos);     index_2=find(SPEEDS==rounded_vel);
                 state_new=n_speeds*index_1 + index_2  #new state in Q matrix
 
                 QMax=max(Q[state_new])  #selects the highest value of the row
-                if (size(QMax,2))>1:
-                    QMax=QMax(1)
-                else:
-                    QMax=QMax(1)
+              #  if (size(QMax,2))>1:
+               #     QMax=QMax(1)
+                #else:
+                #    QMax=QMax(1)
 
 
             #REWARD
-                A1=exp(-abs(rounded_pos-Final_height)/(0.1*110))
-                A2=exp(-abs(rounded_vel-Final_vel)/(0.1*14))
+                A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
+                A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
                 Reward=A1*A2*1000000  #takes into account pos and vel
 
                 #Q VALUE update
