@@ -82,7 +82,7 @@ for episode in range(1,200000):
         if (aleatory_number==1): #5 of times choose aleatory action
             # select any action from this state
             x1=np.random.permutation(2)    # randomize the possible action out of 3 possible
-            x1=x1(1)          # select an action (only the first element of random sequence)
+            x1=x1[1]          # select an action (only the first element of random sequence)
             F=Actions[x1]
         
         else:
