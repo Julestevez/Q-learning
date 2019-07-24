@@ -65,9 +65,6 @@ for episode in range(1,200000):
     z_pos_old=0 #initial conditions of the particle
 
     #must specify the initial speed and position for the state
-    #calculate the RESTO: rem(11,4)=3
-    #calculate COCIENTE: floor(11/4)=2
-
     COCIENTE=(state // n_speeds) #operador // para cociente
     RESTO=(state % n_speeds) #operador % para restos
     #esto lo hago para saber en qué posición de la matriz Q estoy
@@ -77,31 +74,17 @@ for episode in range(1,200000):
 
     while (state!= goalState or state!= (goalState+n_speeds) or state!= (goalState-n_speeds) or state!= (goalState+1) or state!= (goalState+n_speeds+1) or state!= (goalState-n_speeds+1)):          # loop until find goal state and goal action
 
-        aleatory_array=np.random.permutation(20)
-        aleatory_number=aleatory_array[0]
-        if (aleatory_number==1): #5 of times choose aleatory action
-            # select any action from this state
-            x1=np.random.permutation(2)    # randomize the possible action out of 3 possible
-            x1=x1[1]          # select an action (only the first element of random sequence)
-            F=Actions[x1]
-        
-        else:
-            QMax=max(Q[state])  #selects the highest value of the row
-            x1=np.where(Q[state]==QMax)
-            x1=int(x1[0][0])
-            #x1= np.asarray(x1)
-            F=Actions[x1]
+        QMax=max(Q[state])  #selects the highest value of the row
+        x1=np.where(Q[state]==QMax)
+        x1=int(x1[0][0])
+        F=Actions[x1]
             
                 
-
-        #print("hola3")
         #apply dynamic model to check the new state during 0.5seconds
         N=1
         
-        #print("hola5555")
         for i in range(counter*N,1+N+counter*N):
-            #print("hola888")
-            print(i)
+            #print(i)
             z_accel[i]=(-g + F/m)*100 #apply the dynamic model to the particle [cm/s2]
 
             z_vel[i]=z_vel_old + (z_accel[i]+z_accel_old)/2*dt
@@ -117,65 +100,64 @@ for episode in range(1,200000):
                 rand_state=np.random.permutation(Rows)
                 state=rand_state[1]
                 state=11
-            break #
+                counter=0
+                break #
 
 
-        #if negative height or velocity values, reward it very negatively.
-        #If too big values, too
-            if (min(z_pos)<0 or min(z_vel)<-10 or max(z_vel)>50 or max(z_pos)>109):
-                Q[state,x1]=-1
-                rand_state=np.random.permutation(Rows2)
-                state=rand_state[1]
-                state=11
-                break
+    #if negative height or velocity values, reward it very negatively.
+    #If too big values, too
+        if (min(z_pos)<0 or min(z_vel)<-10 or max(z_vel)>50 or max(z_pos)>109):
+            Q[state,x1]=-1 #penalty
+            state=11
+            break
 
-            else:    #if positive values, do the loop
+        else:    #if positive values, do the loop
 
-                rounded_pos=round(z_pos[i])  #round the height with no decimals %no funciona con términos negativos
-                rounded_vel=round(z_vel[i])  #round the vel with no decimals %no funciona con términos negativos
+            rounded_pos=round(z_pos[i])  #round the height with no decimals %no funciona con términos negativos
+            rounded_vel=round(z_vel[i])  #round the vel with no decimals %no funciona con términos negativos
 
-            #find the new state after the dynamic model
-                x1=np.where(Q[state]==QMax)
-                x1=int(x1[0][0])
-                index_1=np.where(STATES==rounded_pos)
-                index_2=np.where(SPEEDS==rounded_vel)
-                index_1=int(index_1[0])
-                index_2=int(index_2[0])
+        #find the new state after the dynamic model
+            x1=np.where(Q[state]==QMax)
+            x1=int(x1[0][0])
+            index_1=np.where(STATES==rounded_pos)
+            index_2=np.where(SPEEDS==rounded_vel)
+            index_1=int(index_1[0])
+            index_2=int(index_2[0])
 
-                state_new=n_speeds*index_1 + index_2  #new state in Q matrix
+            state_new=n_speeds*index_1 + index_2  #new state in Q matrix
 
-                QMax=max(Q[state_new])  #selects the highest value of the row
-              #  if (size(QMax,2))>1:
-               #     QMax=QMax(1)
-                #else:
-                #    QMax=QMax(1)
+            QMax=max(Q[state_new])  #selects the highest value of the row
+          #  if (size(QMax,2))>1:
+           #     QMax=QMax(1)
+            #else:
+            #    QMax=QMax(1)
 
 
-            #REWARD
-                A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
-                A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
-                Reward=A1*A2*1000000  #takes into account pos and vel
+        #REWARD
+            A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
+            A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
+            Reward=A1*A2*1000000  #takes into account pos and vel
 
-                #Q VALUE update
-                Q[state,x1]=Q[state,x1] + alpha*(Reward + gamma*(QMax - Q[state,x1]))  #update Q value
+            #Q VALUE update
+            Q[state,x1]=Q[state,x1] + alpha*(Reward + gamma*(QMax - Q[state,x1]))  #update Q value
 
-                state=state_new  #select the new state
+            state=state_new  #select the new state
+            #print(state)
 
-            #checking
-                if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
-                    logro=logro+1
-                    velocidad_final[logro]=rounded_vel
+        #checking
+            if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
+                logro=logro+1
+                #velocidad_final[logro]=rounded_vel
 
-                if (state==goalState or state==goalState+n_speeds or state==goalState-n_speeds or state==goalState+1 or state==goalState+n_speeds+1|state==goalState-n_speeds+1):
-                    goalCounter=goalCounter+1
-                    z_pos_goal[goalCounter,:]=z_pos
-                    z_vel_goal[goalCounter,:]=z_vel
-                    z_acel_goal[goalCounter,:]=z_accel
-
-
-            #disp(state);
+            if (state==goalState or state==goalState+n_speeds or state==goalState-n_speeds or state==goalState+1 or state==goalState+n_speeds+1|state==goalState-n_speeds+1):
+                goalCounter=goalCounter+1
+                print("exito",goalCounter)
+                z_pos_goal[goalCounter]=z_pos
+                z_vel_goal[goalCounter]=z_vel
+                z_acel_goal[goalCounter]=z_accel
 
 
     #this matrix is stored for the estimation of transition probabilities
     #matrix (value iteration algorithm)
-    z_sequence[episode+1,:]=z_pos
+   # z_sequence[episode+1]=z_pos
+
