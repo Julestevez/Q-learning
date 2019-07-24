@@ -94,8 +94,7 @@ for episode in range(1,200000):
             z_pos_old=z_pos[i]
 
             counter=counter+1
-            #print("counter:",counter)
-
+            
             if i>300:
                 rand_state=np.random.permutation(Rows)
                 state=rand_state[1]
@@ -126,13 +125,7 @@ for episode in range(1,200000):
 
             state_new=n_speeds*index_1 + index_2  #new state in Q matrix
 
-            QMax=max(Q[state_new])  #selects the highest value of the row
-          #  if (size(QMax,2))>1:
-           #     QMax=QMax(1)
-            #else:
-            #    QMax=QMax(1)
-
-
+         
         #REWARD
             A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
             A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
@@ -140,9 +133,8 @@ for episode in range(1,200000):
 
             #Q VALUE update
             Q[state,x1]=Q[state,x1] + alpha*(Reward + gamma*(QMax - Q[state,x1]))  #update Q value
-
             state=state_new  #select the new state
-            #print(state)
+            
 
         #checking
             if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
