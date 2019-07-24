@@ -25,7 +25,6 @@ SPEEDS=np.linspace(-10,50,n_speeds)
 #COLUMNS= Actions (9.9 , 9.7) two actions
 Rows=n_pos*n_speeds
 Columns=2
-Rows2=n_speeds
 
 #initialize variables
 z_pos_goal=np.zeros(2000)
@@ -100,7 +99,7 @@ for episode in range(1,200000):
                 state=rand_state[1]
                 state=11
                 counter=0
-                break #
+                break 
 
 
     #if negative height or velocity values, reward it very negatively.
