@@ -40,7 +40,7 @@ goalState=101*n_speeds+11 #this is the index of the state where height=100cm and
 
 alpha=0.5
 gamma=0.5
-Actions=([9.9, 9.7])
+Actions=([9.85, 9.65])
 goalCounter=0
 logro=0
 
@@ -84,6 +84,11 @@ for episode in range(1,200000):
         
         for i in range(counter*N,1+N+counter*N):
             #print(i)
+            QMax=max(Q[state])  #selects the highest value of the row
+            x1=np.where(Q[state]==QMax)
+           # x1=int(x1[0][0])
+            F=Actions[x1]
+
             z_accel[i]=(-g + F/m)*100 #apply the dynamic model to the particle [cm/s2]
 
             z_vel[i]=z_vel_old + (z_accel[i]+z_accel_old)/2*dt
@@ -93,13 +98,14 @@ for episode in range(1,200000):
             z_pos_old=z_pos[i]
 
             counter=counter+1
-            
+            #print("counter:",counter)
+
             if i>300:
                 rand_state=np.random.permutation(Rows)
                 state=rand_state[1]
                 state=11
                 counter=0
-                break 
+                break #
 
 
     #if negative height or velocity values, reward it very negatively.
@@ -124,7 +130,9 @@ for episode in range(1,200000):
 
             state_new=n_speeds*index_1 + index_2  #new state in Q matrix
 
-         
+            QMax=max(Q[state_new])  #selects the highest value of the row
+          
+
         #REWARD
             A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
             A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
@@ -138,17 +146,20 @@ for episode in range(1,200000):
         #checking
             if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
                 logro=logro+1
+                #print(state)
                 #velocidad_final[logro]=rounded_vel
 
-            if (state==goalState or state==goalState+n_speeds or state==goalState-n_speeds or state==goalState+1 or state==goalState+n_speeds+1|state==goalState-n_speeds+1):
-                goalCounter=goalCounter+1
-                print("exito",goalCounter)
-                z_pos_goal[goalCounter]=z_pos
-                z_vel_goal[goalCounter]=z_vel
-                z_acel_goal[goalCounter]=z_accel
+            #if (state==goalState or state==(goalState+n_speeds) or state==(goalState-n_speeds) or state==(goalState+1) or state==(goalState+n_speeds+1) or state==(goalState-n_speeds+1)):
+                if (rounded_vel==0):
+                    goalCounter=goalCounter+1
+                    print("exito",goalCounter)
+                    z_pos_goal[goalCounter]=z_pos
+                    z_vel_goal[goalCounter]=z_vel
+                    z_acel_goal[goalCounter]=z_accel
 
 
     #this matrix is stored for the estimation of transition probabilities
     #matrix (value iteration algorithm)
-   # z_sequence[episode+1]=z_pos
+        #z_sequence[episode+1]=z_pos
+
 
