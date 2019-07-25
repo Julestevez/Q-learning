@@ -6,6 +6,7 @@
 import numpy as np
 import math
 import random
+import matplotlib.pyplot as plt
 
 m=1 #1kg mass
 g=9.80 #gravity
@@ -28,6 +29,7 @@ Rows=n_pos*n_speeds
 Columns=2
 
 #initialize variables
+x=np.linspace(1,2000,2000)
 z_pos_goal=np.zeros(2000)
 z_vel_goal=np.zeros(2000)
 z_acel_goal=np.zeros(2000)
@@ -41,7 +43,8 @@ goalState=101*n_speeds+11 #this is the index of the state where height=100cm and
 
 alpha=0.5
 gamma=0.5
-Actions=([9.85, 9.65])
+epsilon=0.08
+Actions=([9.9, 9.7])
 goalCounter=0
 logro=0
 
@@ -75,23 +78,38 @@ for episode in range(1,200000):
     while (state!= goalState or state!= (goalState+n_speeds) or state!= (goalState-n_speeds) or state!= (goalState+1) or state!= (goalState+n_speeds+1) or state!= (goalState-n_speeds+1)):          # loop until find goal state and goal action
 
         ## Find the maximum value of each row
-        QMax=max(Q[state]) 
-        max_indices=np.where(Q[state]==QMax)[0] # Identify all indexes where Q equals max
-        n_hits=len(max_indices) # Number of hits
-        max_index=int(max_indices[random.randint(0, n_hits-1)]) # If many hits, choose randomly
-        F=Actions[max_index]
+        if np.random.uniform() < epsilon:
+            rand_action=np.random.permutation(Columns)
+            action=rand_action[1] #current action
+            F=Actions[action]
+        # if not select max action in Qtable (act greedy)
+        else:
+            QMax=max(Q[state]) 
+            max_indices=np.where(Q[state]==QMax)[0] # Identify all indexes where Q equals max
+            n_hits=len(max_indices) # Number of hits
+            max_index=int(max_indices[random.randint(0, n_hits-1)]) # If many hits, choose randomly
+            F=Actions[max_index]
             
                 
         #apply dynamic model to check the new state during 0.5seconds
         N=1
         
         for i in range(counter*N,1+N+counter*N):
-            #print(i)
-            QMax=max(Q[state])  #selects the highest value of the row
-            x1=np.where(Q[state]==QMax)
-            x1=int(x1[0][0])
-            F=Actions[x1]
 
+            ## Choose sometimes the Force randomly
+            if np.random.uniform() < epsilon:
+                rand_action=np.random.permutation(Columns)
+                action=rand_action[1] #current action
+                F=Actions[action]
+            # if not select max action in Qtable (act greedy)
+            else:
+                QMax=max(Q[state]) 
+                max_indices=np.where(Q[state]==QMax)[0] # Identify all indexes where Q equals max
+                n_hits=len(max_indices) # Number of hits
+                max_index=int(max_indices[random.randint(0, n_hits-1)]) # If many hits, choose randomly
+                F=Actions[max_index]
+            
+            
             z_accel[i]=(-g + F/m)*100 #apply the dynamic model to the particle [cm/s2]
 
             z_vel[i]=z_vel_old + (z_accel[i]+z_accel_old)/2*dt
@@ -114,7 +132,7 @@ for episode in range(1,200000):
     #if negative height or velocity values, reward it very negatively.
     #If too big values, too
         if (min(z_pos)<0 or min(z_vel)<-10 or max(z_vel)>50 or max(z_pos)>109):
-            Q[state,x1]=-1 #penalty
+            Q[state,max_index]=-1 #penalty
             state=11
             break
 
@@ -124,8 +142,14 @@ for episode in range(1,200000):
             rounded_vel=round(z_vel[i])  #round the vel with no decimals %no funciona con términos negativos
 
         #find the new state after the dynamic model
-            x1=np.where(Q[state]==QMax)
-            x1=int(x1[0][0])
+            
+             ## Find the maximum value of each row
+            QMax=max(Q[state]) 
+            max_indices=np.where(Q[state]==QMax)[0] # Identify all indexes where Q equals max
+            n_hits=len(max_indices) # Number of hits
+            max_index=int(max_indices[random.randint(0, n_hits-1)]) # If many hits, choose randomly
+            
+
             index_1=np.where(STATES==rounded_pos)
             index_2=np.where(SPEEDS==rounded_vel)
             index_1=int(index_1[0])
@@ -142,23 +166,21 @@ for episode in range(1,200000):
             Reward=A1*A2*1000000  #takes into account pos and vel
 
             #Q VALUE update
-            Q[state,x1]=Q[state,x1] + alpha*(Reward + gamma*(QMax - Q[state,x1]))  #update Q value
+            Q[state,max_index]=Q[state,max_index] + alpha*(Reward + gamma*(QMax - Q[state,max_index]))  #update Q value
             state=state_new  #select the new state
             
 
         #checking
             if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
                 logro=logro+1
-                #print(state)
-                #velocidad_final[logro]=rounded_vel
+                
 
-            #if (state==goalState or state==(goalState+n_speeds) or state==(goalState-n_speeds) or state==(goalState+1) or state==(goalState+n_speeds+1) or state==(goalState-n_speeds+1)):
                 if (rounded_vel==0):
                     goalCounter=goalCounter+1
                     print("exito",goalCounter)
-                    z_pos_goal[goalCounter]=z_pos
-                    z_vel_goal[goalCounter]=z_vel
-                    z_acel_goal[goalCounter]=z_accel
+                    #z_pos_goal[goalCounter]=z_pos
+                    #z_vel_goal[goalCounter]=z_vel
+                    #z_acel_goal[goalCounter]=z_accel
 
 
     #this matrix is stored for the estimation of transition probabilities
