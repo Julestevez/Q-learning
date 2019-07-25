@@ -5,6 +5,7 @@
 
 import numpy as np
 import math
+import random
 
 m=1 #1kg mass
 g=9.80 #gravity
@@ -73,10 +74,12 @@ for episode in range(1,200000):
 
     while (state!= goalState or state!= (goalState+n_speeds) or state!= (goalState-n_speeds) or state!= (goalState+1) or state!= (goalState+n_speeds+1) or state!= (goalState-n_speeds+1)):          # loop until find goal state and goal action
 
-        QMax=max(Q[state])  #selects the highest value of the row
-        x1=np.where(Q[state]==QMax)
-        x1=int(x1[0][0])
-        F=Actions[x1]
+        ## Find the maximum value of each row
+        QMax=max(Q[state]) 
+        max_indices=np.where(Q[state]==QMax)[0] # Identify all indexes where Q equals max
+        n_hits=len(max_indices) # Number of hits
+        max_index=int(max_indices[random.randint(0, n_hits-1)]) # If many hits, choose randomly
+        F=Actions[max_index]
             
                 
         #apply dynamic model to check the new state during 0.5seconds
@@ -86,7 +89,7 @@ for episode in range(1,200000):
             #print(i)
             QMax=max(Q[state])  #selects the highest value of the row
             x1=np.where(Q[state]==QMax)
-           # x1=int(x1[0][0])
+            x1=int(x1[0][0])
             F=Actions[x1]
 
             z_accel[i]=(-g + F/m)*100 #apply the dynamic model to the particle [cm/s2]
