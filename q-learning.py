@@ -1,7 +1,7 @@
 #this code is the workbench for q-learning
 #it consists on a lifting particle that must reach a certain height
 #it is only subjected to gravity
-#Force applied to the particle might be fixed +F, -F or 0
+#Force applied to the particle might be fixed 9.9 or 9.7N
 
 import numpy as np
 import math
@@ -17,7 +17,7 @@ Final_vel=0
 
 #STATES are discretized 0-1-2-3...100..-101-102-110cm and speed is discretized in
 n_pos=111
-STATES=np.linspace(0,110,n_pos)
+STATES=np.linspace(0,Final_height+10,Final_height+10+1)
 
 #SPEEDS are discretized -10,-9,-8...0,1,2,3...,50cm/s.
 n_speeds=61
@@ -27,6 +27,7 @@ SPEEDS=np.linspace(-10,50,n_speeds)
 #COLUMNS= Actions (9.9 , 9.7) two actions
 Rows=n_pos*n_speeds
 Columns=2
+Actions=([9.9, 9.7])
 
 n_items=302
 
@@ -43,12 +44,12 @@ Q=np.ones((Rows,Columns))
 goalState=101*n_speeds+11 #this is the index of the state where height=100cm and vel=0cm/s
 
 
+#Q-learning variables
 alpha=0.5
 gamma=0.5
 epsilon=0.08
-Actions=([9.9, 9.7])
 goalCounter=0
-logro=0
+
 
 #function to choose the Action
 def ChooseAction (Columns,Q,state):
@@ -57,6 +58,7 @@ def ChooseAction (Columns,Q,state):
         rand_action=np.random.permutation(Columns)
         action=rand_action[1] #current action
         F=Actions[action]
+        max_index=1
     # if not select max action in Qtable (act greedy)
     else:
         QMax=max(Q[state]) 
@@ -65,7 +67,19 @@ def ChooseAction (Columns,Q,state):
         max_index=int(max_indices[random.randint(0, n_hits-1)]) # If many hits, choose randomly
         F=Actions[max_index]
 
-    return F
+    return F, max_index
+
+def ActionToState(F,g,m,dt,z_pos_old,z_vel_old,z_accel_old):
+    z_accel=(-g + F/m)*100 
+    z_vel=z_vel_old + (z_accel+z_accel_old)/2*dt
+    z_pos=z_pos_old + (z_vel+z_vel_old)/2*dt
+    z_accel_old=z_accel
+    z_vel_old=z_vel #temp
+    z_pos_old=z_pos #temp
+
+    return z_accel,z_vel,z_pos,z_vel_old,z_pos_old
+
+
 
 for episode in range(1,200000):
     # random initial state
@@ -77,11 +91,7 @@ for episode in range(1,200000):
     z_acel_goal=np.zeros((1000, n_items))
     # must do this to delete previous values
     
-    counter=0
     state=11 #let's choose the initial state always height 0, speed 0cm/s
-
-    rand_action=np.random.permutation(Columns)
-    action=rand_action[1] #current action
 
     print("episode",episode) #check
 
@@ -89,51 +99,20 @@ for episode in range(1,200000):
     z_vel_old=0
     z_pos_old=0 #initial conditions of the particle
 
-    #must specify the initial speed and position for the state
-    QUOTIENT=(state // n_speeds) #operador 
-    REST=(state % n_speeds) #operador 
-    #esto lo hago para saber en qué posición de la matriz Q estoy
-    z_pos_old=QUOTIENT
-    z_vel_old=SPEEDS[REST+1]
+  
+    for i in range(1,300):
 
-
-    while (state!= goalState or state!= (goalState+n_speeds) or state!= (goalState-n_speeds) or state!= (goalState+1) or state!= (goalState+n_speeds+1) or state!= (goalState-n_speeds+1)):          # loop until find goal state and goal action
-
-       
-        ## Find the maximum value of each row
-        F = ChooseAction(Columns, Q, state)
-            
-                
-        #apply dynamic model to check the new state during 0.5seconds
-        N=1
-        
-        for i in range(counter*N,1+N+counter*N):
-
-            ## Choose sometimes the Force randomly
-            F = ChooseAction(Columns, Q, state)
+        ## Choose sometimes the Force randomly
+        F,max_index = ChooseAction(Columns, Q, state)
                         
-            #update the dynamic model
-            z_accel[i]=(-g + F/m)*100 
-
-            z_vel[i]=z_vel_old + (z_accel[i]+z_accel_old)/2*dt
-            z_pos[i]=z_pos_old + (z_vel[i]+z_vel_old)/2*dt
-            z_accel_old=z_accel[i]
-            z_vel_old=z_vel[i] #temp
-            z_pos_old=z_pos[i] #temp
-
-            counter=counter+1
-            
-            if i>300: #this makes the sequence not to get too long
-                state=11
-                counter=0
-                break 
-
-
-    #if negative height or velocity values, reward it very negatively.
-    #If too big values, too
+        #update the dynamic model
+        z_accel[i],z_vel[i],z_pos[i],z_vel_old,z_pos_old= ActionToState (F,g,m,dt,z_pos_old,z_vel_old,z_accel_old)
+                     
+          
+        #if negative height or velocity values, reward it very negatively.
+        #If too big values, too
         if (min(z_pos)<0 or min(z_vel)<-10 or max(z_vel)>50 or max(z_pos)>109):
-            Q[state,max_index]=-1 #penalty
-            state=11
+            Q[state,max_index]=-100 #penalty
             break
 
         else:    #if positive values, do the loop
@@ -154,38 +133,31 @@ for episode in range(1,200000):
             index_1=int(index_1[0])
             index_2=int(index_2[0])
 
-            state_new=n_speeds*index_1 + index_2  #new state in Q matrix
-            QMax=max(Q[state_new])  #selects the highest value of the row
+            state=n_speeds*index_1 + index_2  #new state in Q matrix
+            QMax=max(Q[state])  #selects the highest value of the row
           
 
-        #REWARD
+            #REWARD
             A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
             A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
             Reward=A1*A2*1000000  #takes into account pos and vel
 
             #Q VALUE update
             Q[state,max_index]=Q[state,max_index] + alpha*(Reward + gamma*(QMax - Q[state,max_index]))  #update Q value
-            state=state_new  #select the new state
-            
+                       
 
-        #checking
+            #checking
             if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
-                logro=logro+1
-                
-
+                print("entra")
                 if (rounded_vel==0):
                     goalCounter=goalCounter+1 #counter of successful hits
                    
-                    z_pos_goal[goalCounter]=z_pos
-                    z_vel_goal[goalCounter]=z_vel
-                    z_acel_goal[goalCounter]=z_accel
+                    z_pos_goal[0:i,goalCounter]=z_pos[0:i]
+                    z_vel_goal[0:i,goalCounter]=z_vel[0:i]
+                    z_acel_goal[0:i,goalCounter]=z_accel[0:i]
                     state=11 #reinitialize
+                    break
 
                 else:
-                    state=11
-                    
+                    break
 
-
-    #this matrix is stored for the estimation of transition probabilities
-    #matrix (value iteration algorithm)
-        #z_sequence[episode+1]=z_pos
