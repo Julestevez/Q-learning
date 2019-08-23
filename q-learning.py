@@ -27,7 +27,7 @@ STATES=np.linspace(0,Final_height+10,Final_height+10+1)
 n_speeds=61
 SPEEDS=np.linspace(-10,50,n_speeds)
 
-#ROWS=    States (121*61=7381 rows)
+#ROWS=    States (121*61=7381 rows. Per each height, 61 different velocities).
 #COLUMNS= Actions (9.9 , 9.7) two actions
 Rows=n_pos*n_speeds
 Columns=2
