@@ -126,7 +126,7 @@ for episode in range(1,200000):
           
 
             #REWARD
-            A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*110))
+            A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*n_pos))
             A2=math.exp(-abs(rounded_vel-Final_vel)/(0.1*14))
             Reward=A1*A2*1000000  #takes into account pos and vel
 
@@ -135,9 +135,9 @@ for episode in range(1,200000):
                        
 
             #checking
-            if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
+            if (rounded_pos==Final_height or rounded_pos==Final_height-1 or rounded_pos==Final_height+1):
                 print("entra")
-                if (rounded_vel==0):
+                if (rounded_vel==Final_vel or rounded_vel==Final_vel+1):
                     goalCounter=goalCounter+1 #counter of successful hits
                     
                     #saving of successful data
@@ -151,18 +151,4 @@ for episode in range(1,200000):
                     break
                        
 
-            #checking
-            if (rounded_pos==100 or rounded_pos==99 or rounded_pos==101):
-                print("entra")
-                if (rounded_vel==0):
-                    goalCounter=goalCounter+1 #counter of successful hits
-                   
-                    z_pos_goal[0:i,goalCounter]=z_pos[0:i]
-                    z_vel_goal[0:i,goalCounter]=z_vel[0:i]
-                    z_acel_goal[0:i,goalCounter]=z_accel[0:i]
-                    state=11 #reinitialize
-                    break
-
-                else:
-                    break
-
+         
