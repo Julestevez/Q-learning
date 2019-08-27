@@ -106,7 +106,7 @@ for episode in range(1,200000):
           
         #if negative height or velocity values, reward it very negatively.
         #If too big values, too
-        if (min(z_pos)<0 or min(z_vel)<-10 or max(z_vel)>50 or max(z_pos)>109):
+        if (min(z_pos)<0 or min(z_vel)<SPEEDS[1] or max(z_vel)>SPEEDS[60] or max(z_pos)>0.99*n_pos):
             Q[state,max_index]=-100 #penalty
             break
 
