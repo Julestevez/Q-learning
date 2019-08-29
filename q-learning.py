@@ -122,7 +122,7 @@ for episode in range(1,200000):
             index_2=int(index_2[0])
 
             state=n_speeds*index_1 + index_2  #new state in Q matrix
-                      
+            QMax=max(Q[state])         
 
             #REWARD
             A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*n_pos))
