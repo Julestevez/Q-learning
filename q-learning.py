@@ -15,19 +15,19 @@ import matplotlib.pyplot as plt
 m=1 #1kg mass
 g=9.80 #gravity
 dt=0.05 #simulation time
-Final_height=100 #1m
+Final_height=50 #1m
 Final_vel=0
 
 
-#STATES are discretized 0-1-2-3...100..-101-102-110cm and speed is discretized in
-n_pos=111
+#STATES are discretized 0-1-2-3...50...-59-60 cm and speed is discretized in
+n_pos=61
 STATES=np.linspace(0,Final_height+10,Final_height+10+1)
 
 #SPEEDS are discretized -10,-9,-8...0,1,2,3...,50cm/s.
 n_speeds=61
 SPEEDS=np.linspace(-10,50,n_speeds)
 
-#ROWS=    States (121*61=7381 rows. Per each height, 61 different velocities).
+#ROWS=    States (61*61=3721 rows)
 #COLUMNS= Actions (9.9 , 9.7) two actions
 Rows=n_pos*n_speeds
 Columns=2
@@ -44,8 +44,9 @@ Q=np.ones((Rows,Columns))
 #Q-learning variables
 alpha=0.5
 gamma=0.5
-epsilon=0.08
+epsilon=0.15
 goalCounter=0
+Contador=0
 
 
 #function to choose the Action
@@ -99,7 +100,7 @@ for episode in range(1,200000):
 
         ## Choose sometimes the Force randomly
         F,max_index = ChooseAction(Columns, Q, state)
-                        
+                                
         #update the dynamic model
         z_accel[i],z_vel[i],z_pos[i],z_vel_old,z_pos_old= ActionToState (F,g,m,dt,z_pos_old,z_vel_old,z_accel_old)
                      
@@ -122,7 +123,8 @@ for episode in range(1,200000):
             index_2=int(index_2[0])
 
             state=n_speeds*index_1 + index_2  #new state in Q matrix
-            QMax=max(Q[state])         
+            QMax=max(Q[state])  #selects the highest value of the row
+          
 
             #REWARD
             A1=math.exp(-abs(rounded_pos-Final_height)/(0.1*n_pos))
@@ -136,18 +138,16 @@ for episode in range(1,200000):
             #checking
             if (rounded_pos==Final_height or rounded_pos==Final_height-1 or rounded_pos==Final_height+1):
                 print("entra")
+                goalCounter=goalCounter+1
                 if (rounded_vel==Final_vel or rounded_vel==Final_vel+1):
-                    goalCounter=goalCounter+1 #counter of successful hits
+                    Contador=Contador +1  #counter of successful hits
                     
                     #saving of successful data
-                    z_pos_goal[0:i,goalCounter]=z_pos[0:i]
-                    z_vel_goal[0:i,goalCounter]=z_vel[0:i]
-                    z_acel_goal[0:i,goalCounter]=z_accel[0:i]
+                    z_pos_goal[0:i,Contador]=z_pos[0:i]
+                    z_vel_goal[0:i,Contador]=z_vel[0:i]
+                    z_acel_goal[0:i,Contador]=z_accel[0:i]
                     state=11 #reinitialize
                     break
 
                 else:
                     break
-                       
-
-         
